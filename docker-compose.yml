@@ -29,7 +29,12 @@ services:
       - "9100:9100"
     restart: always
 
-
+  SonarQube:
+    image: sonarqube:latest
+    container_name: sonarqube-krushna
+    ports:
+      - "9000:9000"
+    restart: always
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
