@@ -3,8 +3,11 @@ version: "3.9"
 services:
   myapp:
     build: .
+    container_name: ecommerce-myapp
     ports:
       - "80:80"
+    volumes:
+      - myapp_data:/usr/share/nginx/html   # 👈 DATA SAFE
     restart: always
 
   sonarqube:
@@ -39,6 +42,7 @@ services:
     restart: always
 
 volumes:
+  myapp_data:          # 👈 NEW
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
