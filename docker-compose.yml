@@ -7,7 +7,7 @@ services:
     ports:
       - "80:80"
     volumes:
-      - myapp_data:/usr/share/nginx/html   # 👈 DATA SAFE
+      - myapp_data:/usr/share/nginx/html
     restart: always
 
   sonarqube:
@@ -23,28 +23,8 @@ services:
       - sonarqube_logs:/opt/sonarqube/logs
     restart: always
 
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus-krushna
-    ports:
-      - "9090:9090"
-    volumes:
-      - prometheus_data:/prometheus
-    restart: always
-
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana-krush-jagdale
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    restart: always
-
 volumes:
-  myapp_data:          # 👈 NEW
+  myapp_data:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:
-  prometheus_data:
-  grafana_data:
