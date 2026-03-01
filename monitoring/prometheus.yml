@@ -4,4 +4,4 @@ global:
 scrape_configs:
   - job_name: 'app-server'
     static_configs:
-      - targets: ['172.31.25.200:9100']
+      - targets: ['34.224.58.237:9100']
