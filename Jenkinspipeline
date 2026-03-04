@@ -1,0 +1,96 @@
+pipeline {
+    agent { label 'agent' }
+
+    environment {
+        GITHUB_CRED  = 'github'
+        MONITOR_CRED = 'monitoring-cred'
+    }
+
+    stages {
+
+        stage('Git Clone') {
+            steps {
+                git branch: 'master',
+                    credentialsId: "${GITHUB_CRED}",
+                    url: 'https://github.com/krushjagdale1/Ecommerce_App1.git'
+            }
+        }
+
+        stage('Deploy Application on Agent') {
+            steps {
+                sh """
+                    echo "Deploying Application on Agent..."
+                    docker-compose down || true
+                    docker-compose up -d --build
+                """
+            }
+        }
+
+        stage('Deploy Monitoring on Remote VM') {
+            steps {
+                sshagent(['monitoring-cred']) {
+                    sh """
+                        echo "Deploying Monitoring..."
+
+                        ssh -o StrictHostKeyChecking=no root@\$MONITOR_HOST "
+                            rm -rf /root/monitoring &&
+                            mkdir -p /root/monitoring
+                        "
+
+                        scp -o StrictHostKeyChecking=no monitoring/docker-compose.yml root@\$MONITOR_HOST:/root/monitoring/
+                        scp -o StrictHostKeyChecking=no monitoring/prometheus.yml root@\$MONITOR_HOST:/root/monitoring/
+
+                        ssh -o StrictHostKeyChecking=no root@\$MONITOR_HOST "
+                            cd /root/monitoring &&
+                            docker-compose down || true &&
+                            docker-compose up -d
+                        "
+                    """
+                }
+            }
+        }
+        stage('Deploy Application on Kubernetes') {
+            steps {
+                sshagent(['kuber-cred']) {
+                    sh """
+                        echo "Deploying Application to Kubernetes Cluster from GitHub..."
+
+                        ssh -o StrictHostKeyChecking=no root@52.91.54.33 '
+
+                        # Create folder for Jenkins repo on master
+                        mkdir -p /root/jenkins_repo && cd /root/jenkins_repo
+
+                        # Clone repo if not exists, otherwise pull latest
+                        git clone -b master https://github.com/krushjagdale1/Ecommerce_App1.git || \
+                        (cd E-Commerse-Application && git pull)
+
+                        cd Ecommerce_App1/E-Commerse-Application/k8s
+
+                        # Apply all K8s manifests
+                        kubectl apply -f namespaces.yaml
+                        kubectl apply -f ecommers-deployment.yaml
+                        kubectl apply -f ecommers-svc.yaml
+                        kubectl apply -f nginx-deploy.yaml
+                        kubectl apply -f nginx-svc.yaml
+
+                        # Wait for rollout
+                        kubectl rollout status deployment/ecommerce-deployment -n krushna
+
+                        # Show pods running on worker node
+                        kubectl get pods -n krushna -o wide
+                        '
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Deployment completed successfully!"
+        }
+        failure {
+            echo "❌ Deployment failed! Check logs."
+        }
+    }
+}
