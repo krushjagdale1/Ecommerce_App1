@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-deployment
+  namespace: krushna
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ecommerce
+  template:
+    metadata:
+      labels:
+        app: ecommerce
+    spec:
+      nodeSelector:
+        node-type: worker
+      containers:
+      - name: ecommerce-container
+        image: krushjagdale/ecommerce:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
